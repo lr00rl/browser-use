@@ -1,0 +1,39 @@
+{
+  "name": "chrome-tether",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Let coding agents and your own scripts drive the Chrome you are already using, through one approved local connection.",
+  "license": "MIT",
+  "author": "lr00rl",
+  "type": "module",
+  "bin": {
+    "browserctl": "./bin/browserctl.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/*.mjs",
+    "!src/*.test.mjs",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "keywords": [
+    "chrome",
+    "cdp",
+    "browser-automation",
+    "mcp",
+    "agent",
+    "browser-use"
+  ],
+  "scripts": {
+    "test": "node --test src/*.test.mjs",
+    "check:redaction": "node scripts/check-redaction.mjs"
+  }
+}

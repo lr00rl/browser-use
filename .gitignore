@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+
+# Captures from real-browser sessions hold live tab IDs, profile names, and screenshots of personal pages.
+evidence/
+.playwright-mcp/
+/*.png
+screenshots/
+
+# Pi keeps project settings here; only the shared MCP config is part of the project.
+.pi/*
+!.pi/mcp.json

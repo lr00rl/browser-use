@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "browser_chrome": {
+      "command": "node",
+      "args": ["bin/browserctl.mjs", "mcp"],
+      "cwd": ".",
+      "description": "Work in tabs of the user's running Chrome profile through the local browserctl broker. Chrome must allow remote debugging and a profile must be bound with browserctl bind.",
+      "exposure": "deferred",
+      "timeout": 120
+    }
+  }
+}
