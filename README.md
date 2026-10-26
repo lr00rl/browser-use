@@ -103,7 +103,7 @@ The client exposes `status`, `tabs`, `tabsAll`, `bind`, `unbind`, `open`, `activ
 
 `browserctl mcp` is a stdio MCP server. It connects to the same broker, so an agent and your terminal see the same tabs and share the same single approval. The agent cannot bind a profile; you do that with the CLI. Profile binding is a human decision.
 
-Pi reads [.pi/mcp.json](.pi/mcp.json) when you run it inside this repository. For use anywhere, add the server at user level:
+[docs/pi.md](docs/pi.md) walks through Pi in detail. It covers this tool and agent-browser, side by side, with troubleshooting. Pi reads [.pi/mcp.json](.pi/mcp.json) when you run it inside this repository. For use anywhere, add the server at user level:
 
 ```json
 {

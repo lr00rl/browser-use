@@ -8,7 +8,7 @@ Tools that let an agent use your real, logged-in Chrome take one of two routes. 
 
 [chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) is Google's MCP server and the reference for this flow (Apache-2.0). With `--autoConnect` it attaches to the running Chrome stable, or to another channel when configured ([docs](https://developer.chrome.com/docs/devtools/agents/use-cases/auto-connect)). Its strength is debugging: performance traces, network, console with source maps, and Lighthouse. It also ships a `chrome-devtools` CLI backed by a background daemon. The CLI documentation describes that daemon as launching its own browser and does not mention attaching to an existing one. The docs also say Chrome shows a permission dialog each time the server requests a session, so every MCP client gets its own prompt. Usage statistics are on by default.
 
-[agent-browser](https://github.com/vercel-labs/agent-browser) from Vercel Labs (Apache-2.0) is the closest match in shape. It is a native Rust CLI with a background daemon (one hour idle timeout by default), compact `@e1` refs, an interactive-only snapshot (`snapshot -i`), and `--auto-connect` to find a running Chrome. Its command set is far larger: tabs, frames, network routing, cookies, storage, tracing, `eval`, a dashboard, and an MCP mode. If you want breadth, start there. Its [security controls](https://agent-browser.dev/security) are extensive and all opt-in. They are `--action-policy` (allow and deny lists, which can block `eval`), `--confirm-actions` and `--confirm-interactive`, `--content-boundaries`, `--max-output`, an encrypted auth vault, and `--allowed-domains`. With none of them set, nothing is restricted. The security page says the domain allowlist rejects attach modes such as `--auto-connect`. It describes no way to limit an attached session to one Chrome profile, and no check that a click target is covered by another element.
+[agent-browser](https://github.com/vercel-labs/agent-browser) from Vercel Labs (Apache-2.0) is the closest match in shape. It is a native Rust CLI with a background daemon (one hour idle timeout by default), compact `@e1` refs, an interactive-only snapshot (`snapshot -i`), and `--auto-connect` to find a running Chrome. Its command set is far larger: tabs, frames, network routing, cookies, storage, tracing, `eval`, a dashboard, and an MCP mode. If you want breadth, start there. Its [security controls](https://agent-browser.dev/security) are extensive and all opt-in. They are `--action-policy` (allow and deny lists, which can block `eval`), `--confirm-actions` and `--confirm-interactive`, `--content-boundaries`, `--max-output`, an encrypted auth vault, and `--allowed-domains`. With none of them set, nothing is restricted. The security page says the domain allowlist rejects attach modes such as `--auto-connect`. It describes no way to limit an attached session to one Chrome profile, and no check that a click target is covered by another element. `agent-browser mcp` is a stdio MCP server. In version 0.39.4 its default `core` profile offers 29 tools, including `eval`; `--tools` selects other profiles. [pi.md](pi.md) shows how to connect it to Pi.
 
 [Puppeteer](https://pptr.dev/api/puppeteer.connectoptions) supports `connect({ channel: 'chrome' })`, which reads the same `DevToolsActivePort` file. It is a good choice when you want a full automation library in your own Node code rather than a ready CLI or MCP server.
 
@@ -37,11 +37,43 @@ Claude in Chrome (used by Claude Code's `--chrome`) and the ChatGPT/Codex Chrome
 | Human CLI | yes | yes | yes | no | yes |
 | Arbitrary JavaScript or raw CDP | no | yes, unless denied by `--action-policy` | yes | opt-in | yes (CDP) |
 | Scoped to one profile when attached | yes, `bind` | not documented | not documented | `--profile-dir-name` | not documented |
+| Domain allowlist when attached | no (planned) | no, `--allowed-domains` rejects `--auto-connect` | not documented | not checked | not documented |
+| MCP server | `browserctl mcp` | `agent-browser mcp` | yes | yes | yes |
 | Refs refuse changed elements | yes, digest per ref | refuses ambiguous replacements | not documented | per snapshot | not documented |
 | Runtime dependencies | none (Node 22) | native binary | npm package | npm package plus extension | CLI plus extension |
 | Per-tab grant enforced by Chrome | no | no | no | extension decides | extension decides |
 
 The honest summary: if you want features, use agent-browser or chrome-devtools-mcp. agent-browser can also be configured to be strict. This project's case is narrower, and it is about working in the browser that holds your real accounts. Its restrictions are always on and cannot be switched off by an agent's configuration. It scopes access to one profile. Its refs refuse elements that changed meaning, and its clicks refuse targets that something else covers. One approval covers the terminal and every agent. And the whole thing is small enough to audit, with no dependency tree.
+
+## browserctl and agent-browser in detail
+
+The two tools overlap the most, so the comparison is worth spelling out. It only matters in one situation: attaching to the Chrome that holds your real accounts. Where this section says agent-browser lacks something, that comes from its documentation as of version 0.39.4, not from testing it.
+
+browserctl is stronger in these ways:
+
+- Its restrictions are always on. agent-browser documents that "all security features are opt-in", so a session with no configuration has no limits, and its MCP server enables `eval` by default.
+- agent-browser's strongest network guard, the domain allowlist, cannot be combined with `--auto-connect`. That is exactly the mode for your own browser.
+- browserctl binds to one Chrome profile. agent-browser documents no profile scoping for attached sessions.
+- Before acting, browserctl checks three things. Refs stop working when an element's role or name changes. Clicks are refused when another element covers the target. `fill` types nothing if focus moves. agent-browser's refs stay valid while their DOM node survives and fail only when a replacement is ambiguous. It documents no occlusion or focus check.
+- browserctl reports a write interrupted by a lost connection as `OUTCOME_UNKNOWN` and never retries it.
+- One approval is shared by the terminal, scripts, and several agents. This is tested for browserctl and not documented for agent-browser in attach mode.
+
+agent-browser is stronger in these ways:
+
+- It has far more features: frames, uploads, dialogs, network routing, saved state, tracing, recording, and other browsers and cloud providers.
+- It can ask for confirmation of sensitive actions (`--confirm-actions`, `--confirm-interactive`) and cap output size (`--max-output`).
+- Its encrypted auth vault lets an agent log in without ever seeing the password. browserctl simply refuses to fill credential fields, which is safer but less useful.
+- It has an idle timeout, a team behind it, and a fast release pace.
+
+## Project direction
+
+browserctl will stay a conservative bridge to the browser you already use, with a small, auditable codebase. It will not try to match agent-browser's breadth. The planned work closes the gaps that matter for real accounts. All of it can be enforced in the bridge, without intercepting network traffic:
+
+- A per-binding domain allowlist, checked in `open` and `navigate` and against the tab's URL before every action.
+- Confirmation for sensitive actions, as a terminal prompt or a hook the calling agent answers.
+- Boundary markers around page content in MCP results.
+
+[architecture.md](architecture.md#possible-next-steps) lists the longer-term items.
 
 ## Ideas taken from these projects
 

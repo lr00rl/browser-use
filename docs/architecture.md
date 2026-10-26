@@ -73,8 +73,11 @@ Both products ship their Chrome control as closed components. Each pairs a Chrom
 
 ## Possible next steps
 
-These are deliberately not built yet:
+These are deliberately not built yet. The first three are planned next. They close the gaps that matter most when the browser holds real accounts ([prior-art.md](prior-art.md#project-direction) explains why).
 
+- A per-binding domain allowlist, checked in `open` and `navigate` and against the tab's URL before every action.
+- Confirmation for sensitive actions, as a terminal prompt or a hook the calling agent answers.
+- Boundary markers around page content in MCP results.
 - An extension mode, built on `chrome.debugger` and Native Messaging, for per-tab grants that Chrome itself enforces.
 - Iframe traversal for snapshots.
 - File upload behind an explicit allow-list.
